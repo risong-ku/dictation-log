@@ -3,6 +3,7 @@ Google Drive へのディクテーションアップロード
 GitHub Actions から環境変数経由で実行される
 """
 
+import io
 import os
 from datetime import datetime
 from google.auth.transport.requests import Request
@@ -11,6 +12,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.exceptions import RefreshError
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from googleapiclient.http import MediaIoBaseUpload
 
 
 def get_credentials() -> Credentials:
@@ -109,12 +111,18 @@ def upload_or_update_file(service, folder_id: str, filename: str, content: str, 
     アップロード後のファイルIDを返す
     """
     try:
+        media = MediaIoBaseUpload(
+            io.BytesIO(content.encode('utf-8')),
+            mimetype='text/plain',
+            resumable=False
+        )
+
         if file_id:
             # 既存ファイルを更新
             service.files().update(
                 fileId=file_id,
                 body={'name': filename},
-                media_body=content,
+                media_body=media,
                 fields='id'
             ).execute()
             return file_id
@@ -127,7 +135,7 @@ def upload_or_update_file(service, folder_id: str, filename: str, content: str, 
             }
             file = service.files().create(
                 body=file_metadata,
-                media_body=content,
+                media_body=media,
                 fields='id'
             ).execute()
             return file.get('id')
