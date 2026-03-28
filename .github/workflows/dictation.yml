@@ -38,5 +38,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dictation-error-logs
-          path: /tmp/
+          path: ${{ github.workspace }}
           retention-days: 7
