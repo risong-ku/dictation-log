@@ -15,13 +15,18 @@ exports.handler = async (event) => {
 
     const contentType = event.headers['content-type'] || '';
 
+    // Netlify は base64 エンコードする場合がある
+    const rawBody = event.isBase64Encoded
+      ? Buffer.from(event.body, 'base64').toString('utf-8')
+      : event.body;
+
     if (contentType.includes('application/x-www-form-urlencoded')) {
-      const params = new URLSearchParams(event.body);
+      const params = new URLSearchParams(rawBody);
       text = params.get('text') || '';
       timestamp = params.get('timestamp') || '';
       source = params.get('source') || 'iPhone Siri';
     } else {
-      const body = JSON.parse(event.body || '{}');
+      const body = JSON.parse(rawBody || '{}');
       text = body.text || '';
       timestamp = body.timestamp || '';
       source = body.source || 'iPhone Siri';
