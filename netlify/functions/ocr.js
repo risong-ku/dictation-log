@@ -4,7 +4,7 @@
  * テキストのみを GitHub API に送信する
  */
 
-const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_MODEL = 'gemini-2.5-pro';
 
 async function ocrWithGemini(imageBase64, apiKey) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
