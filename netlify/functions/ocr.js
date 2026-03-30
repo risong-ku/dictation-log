@@ -1,8 +1,34 @@
 /**
- * Netlify Function - OCR Relay
- * iPhone Shortcuts からの画像データを受け取り
- * GitHub API の repository_dispatch に変換して転送する
+ * Netlify Function - OCR
+ * iPhone Shortcuts から画像を受け取り、Gemini で文字起こし後
+ * テキストのみを GitHub API に送信する
  */
+
+const GEMINI_MODEL = 'gemini-2.5-flash';
+
+async function ocrWithGemini(imageBase64, apiKey) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{
+        parts: [
+          { text: 'この画像に書かれている手書き文字をそのまま文字起こしてください。文字起こしの結果のみを返してください。余計な説明は不要です。' },
+          { inline_data: { mime_type: 'image/jpeg', data: imageBase64 } }
+        ]
+      }]
+    })
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Gemini API error: ${response.status} ${err}`);
+  }
+
+  const result = await response.json();
+  return result.candidates[0].content.parts[0].text.trim();
+}
 
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
@@ -23,6 +49,15 @@ exports.handler = async (event) => {
       return { statusCode: 400, body: JSON.stringify({ error: 'image_base64 is required' }) };
     }
 
+    const geminiApiKey = process.env.GEMINI_API_KEY;
+    if (!geminiApiKey) {
+      return { statusCode: 500, body: JSON.stringify({ error: 'GEMINI_API_KEY not set' }) };
+    }
+
+    // Gemini で OCR
+    const text = await ocrWithGemini(image_base64, geminiApiKey);
+
+    // テキストのみ GitHub に送信
     const githubToken = process.env.GITHUB_PAT;
     const response = await fetch(
       'https://api.github.com/repos/risong-ku/dictation-log/dispatches',
@@ -34,14 +69,14 @@ exports.handler = async (event) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          event_type: 'ocr',
-          client_payload: { image_base64, timestamp, source },
+          event_type: 'dictation',
+          client_payload: { text, timestamp, source },
         }),
       }
     );
 
     if (response.status === 204) {
-      return { statusCode: 200, body: JSON.stringify({ status: 'success' }) };
+      return { statusCode: 200, body: JSON.stringify({ status: 'success', text }) };
     } else {
       const errorText = await response.text();
       return { statusCode: 500, body: JSON.stringify({ error: errorText }) };
