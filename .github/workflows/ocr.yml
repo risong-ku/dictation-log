@@ -1,8 +1,8 @@
-name: Upload Dictation to Google Drive
+name: OCR Image to Google Drive
 
 on:
   repository_dispatch:
-    types: [dictation]
+    types: [ocr]
   workflow_dispatch:
 
 jobs:
@@ -22,21 +22,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Upload dictation to Google Drive
+      - name: OCR and upload to Google Drive
         env:
-          DICTATION_TEXT: ${{ github.event.client_payload.text }}
+          DICTATION_IMAGE_BASE64: ${{ github.event.client_payload.image_base64 }}
           DICTATION_TIMESTAMP: ${{ github.event.client_payload.timestamp }}
           DICTATION_SOURCE: ${{ github.event.client_payload.source }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
           GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
-        run: cd scripts && python upload_to_drive.py
-
-      - name: Upload logs on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: dictation-error-logs
-          path: ${{ github.workspace }}
-          retention-days: 7
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: cd scripts && python ocr_to_drive.py
