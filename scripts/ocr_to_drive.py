@@ -15,7 +15,7 @@ from drive_helper import save_to_drive
 
 def ocr_with_gemini(image_base64: str, gemini_api_key: str) -> str:
     """Gemini API で画像を文字起こし"""
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_api_key}"
 
     payload = {
         "contents": [{
