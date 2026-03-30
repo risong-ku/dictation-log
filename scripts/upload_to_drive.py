@@ -172,7 +172,16 @@ def main():
     service = get_drive_service(creds)
 
     # 日付ベースのフォルダ構成を作成
-    dt = datetime.fromisoformat(dictation_timestamp.split()[0]) if dictation_timestamp else datetime.now()
+    if dictation_timestamp:
+        # 様々な日付形式に対応: 2026-03-29, 2026/3/29, 2026/03/29 等
+        date_part = dictation_timestamp.split()[0].replace('/', '-')
+        # 月・日が1桁の場合を補完 (2026-3-29 → 2026-03-29)
+        parts = date_part.split('-')
+        if len(parts) == 3:
+            date_part = f"{parts[0]}-{parts[1].zfill(2)}-{parts[2].zfill(2)}"
+        dt = datetime.fromisoformat(date_part)
+    else:
+        dt = datetime.now()
     year = dt.strftime('%Y')
     month = dt.strftime('%Y-%m')
     filename = dt.strftime('%Y-%m-%d') + '.txt'
