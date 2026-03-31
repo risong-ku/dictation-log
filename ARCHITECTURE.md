@@ -350,7 +350,7 @@ dictation-log/        ← 手動作成（GOOGLE_DRIVE_FOLDER_ID に設定）
 ### Gemini API が 404 エラー（モデルが見つからない）
 - **原因**: 指定したモデル名が存在しない・または利用不可
   - → `https://generativelanguage.googleapis.com/v1beta/models?key=YOUR_KEY` でモデル一覧を確認
-  - 現在使用中: `gemini-2.5-pro`
+  - 現在使用中: `gemini-2.5-flash`
 
 ### Gemini API が 400 エラー（Base64デコード失敗）
 - **原因**: `image_base64` フィールドに画像データではなくファイル名が送られている
